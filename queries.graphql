@@ -1,0 +1,11 @@
+# Fetch current user statistics
+query UserSummary($userBy: UserBy!) {
+  userSummary(userBy: $userBy) {
+    ack
+    date
+    hours
+    specialDayKind {
+      code
+    }
+  }
+}

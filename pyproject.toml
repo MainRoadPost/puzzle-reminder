@@ -1,0 +1,30 @@
+[project]
+name = "puzzle-dailies"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "ariadne-codegen>=0.16.0",
+    "dbus-python>=1.4.0",
+    "dotenv>=0.9.9",
+    "notify2>=0.3.1",
+]
+
+[tool.ariadne-codegen]
+schema_path = "schema.graphql"
+queries_path = "queries.graphql"
+target_package_name = "puzzle"
+# enable_custom_operations = true
+
+[tool.ariadne-codegen.scalars.UUID]
+type = "str"
+
+[tool.ariadne-codegen.scalars.Timestamp]
+type = "str"
+
+[tool.ariadne-codegen.scalars.NaiveDate]
+type = "str"
+
+[tool.ariadne-codegen.scalars.Estimation]
+type = "int"
