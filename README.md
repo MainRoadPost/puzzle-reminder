@@ -25,7 +25,7 @@ uv run --script ./reminder.py
    uv run ariadne-codegen
    ```
 
-   > [!IMPORTANT] > **Важно:** Запуск `ariadne-codegen` является обязательным шагом перед первым запуском приложения и после любых изменений в файлах `schema.graphql` или `queries.graphql`.
+   > **Важно:** Запуск `ariadne-codegen` является обязательным шагом перед первым запуском приложения и после любых изменений в файлах `schema.graphql` или `queries.graphql`.
 
 ## Обновление схемы
 
