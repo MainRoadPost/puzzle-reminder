@@ -4,11 +4,16 @@ import sys
 import tempfile
 from getpass import getuser
 import dotenv
-import notify2
 from datetime import datetime, timedelta
-import fcntl
 from puzzle import Client
 from puzzle.input_types import UserBy, UserWithoutDomain
+
+# Platform-specific imports
+if sys.platform == "win32":
+    import subprocess
+else:
+    import notify2
+    import fcntl
 
 
 def get_desktop_manager():
@@ -34,14 +39,46 @@ def get_weekday_by_date(date_str):
 
 
 def show_notification(title, message):
-    notify2.init("Puzzle")
-    n = notify2.Notification(title, message, "puzzle.png")
-    n.set_urgency(notify2.URGENCY_CRITICAL)
-    n.set_timeout(10000)
     try:
-        n.show()
+        if sys.platform == "win32":
+            # Windows notification using PowerShell
+            # Escape quotes in the message for PowerShell
+            ps_title = title.replace('"', '\\"')
+            ps_message = message.replace('"', '\\"').replace("\n", " ")
+            ps_command = f'''
+$notificationTitle = "{ps_title}"
+$notificationMessage = "{ps_message}"
+[Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] > $null
+[Windows.UI.Notifications.ToastNotification, Windows.UI.Notifications, ContentType = WindowsRuntime] > $null
+[Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom.XmlDocument, ContentType = WindowsRuntime] > $null
+
+$APP_ID = 'PuzzleReminder'
+$template = @"
+<toast>
+    <visual>
+        <binding template="ToastText02">
+            <text id="1">$notificationTitle</text>
+            <text id="2">$notificationMessage</text>
+        </binding>
+    </visual>
+</toast>
+"@
+
+$xml = New-Object Windows.Data.Xml.Dom.XmlDocument
+$xml.LoadXml($template)
+$toast = New-Object Windows.UI.Notifications.ToastNotification $xml
+[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($APP_ID).Show($toast)
+'''
+            subprocess.run(["powershell", "-Command", ps_command], capture_output=True)
+        else:
+            # Linux notification using notify2
+            notify2.init("Puzzle")
+            n = notify2.Notification(title, message, "puzzle.png")
+            n.set_urgency(notify2.URGENCY_CRITICAL)
+            n.set_timeout(10000)
+            n.show()
     except Exception as e:
-        print(e)
+        print(f"Notification error: {e}")
         pass
 
 
@@ -68,7 +105,9 @@ async def check_reports():
     reports = {}
     async with Client(os.environ.get("PUZZLE_API", "")) as client:
         try:
-            result = await client.user_summary(user_by=UserBy(withoutDomain=UserWithoutDomain(login=username)))
+            result = await client.user_summary(
+                user_by=UserBy(withoutDomain=UserWithoutDomain(login=username))
+            )
             reports = {rec.date: (rec.hours, rec.ack) for rec in result.user_summary}
         except Exception as e:
             print(e)
@@ -119,16 +158,33 @@ async def check_reports():
             message += days_info
         show_notification("Незаполненные отчеты в Puzzle", message)
 
+
 async def run():
     try:
         # use lock file to prevent multiple messages
         lock_file = os.path.join(tempfile.gettempdir(), "pzl_reports.lock")
-        with open(lock_file, "w") as f:
-            fcntl.lockf(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        if sys.platform == "win32":
             try:
-                await check_reports()
+                with open(lock_file, "x") as f:
+                    try:
+                        await check_reports()
+                    finally:
+                        pass
+            except FileExistsError:
+                sys.exit()
             finally:
-                fcntl.lockf(f, fcntl.LOCK_UN)
+                # Clean up lock file
+                try:
+                    os.remove(lock_file)
+                except FileNotFoundError:
+                    pass
+        else:
+            with open(lock_file, "w") as f:
+                fcntl.lockf(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                try:
+                    await check_reports()
+                finally:
+                    fcntl.lockf(f, fcntl.LOCK_UN)
     except (IOError, OSError):
         sys.exit()
 
