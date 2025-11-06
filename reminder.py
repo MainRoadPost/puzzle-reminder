@@ -113,11 +113,11 @@ async def check_reports():
                 days += 1
 
     if reported_hours < total_hours:
-        message = f'{username}\n\n с {end_date.strftime("%Y-%m-%d")} по {start_date.strftime("%Y-%m-%d")} не хватает {total_hours - reported_hours} {hours_str(total_hours - reported_hours)}\n<a href="https://puzzle.mrpost.ru/reports">Puzzle reports</a>\n'
+        reports_link = os.environ.get("PUZZLE_API", "").replace("/api/graphql", "/reports")
+        message = f'{username}\n\n с {end_date.strftime("%Y-%m-%d")} по {start_date.strftime("%Y-%m-%d")} не хватает {total_hours - reported_hours} {hours_str(total_hours - reported_hours)}\n<a href="{reports_link}">Puzzle reports</a>\n'
         if days > 0:
             message += days_info
         show_notification("Незаполненные отчеты в Puzzle", message)
-
 
 async def run():
     try:
