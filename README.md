@@ -9,6 +9,16 @@ Authorisation is not needed for this request, only the username (login) from an 
 ```shell
 uv run --script ./reminder.py
 ```
+## Python venv setup
+Before running script create a python venv by running
+```bash
+uv sync
+```
+
+Then execute following command to generate a `puzzle` module from GraphQL schema
+```bash
+uv run ariadne-codegen
+```
 
 ## Changing the generated client
 
