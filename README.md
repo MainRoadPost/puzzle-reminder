@@ -1,47 +1,47 @@
-# Puzzle dailies uploader
+# Puzzle reminder
 
-Пример создания постов в Puzzle через GraphQL
+## Description
 
-## Описание
-
-Пример проверки заполненных пользователем отчетов.
-Программа запрашивает из Puzzle информацию о заполненных отчетах для пользователя ( без авторизации, по имени пользователя из файла .env ) и показывает всплывающее уведомление, если есть незаполненные дни.
+This is an example of how to check reports filled in by users.
+The program requests information from Puzzle regarding reports submitted by the user and displays a pop-up notification if any days have not been completed.
+Authorisation is not needed for this request, only the username (login) from an .env file.
 
 ```shell
 uv run --script ./reminder.py
 ```
 
-## Изменение кода
+## Changing the generated client
 
-Для общения с GraphQL-интерфейсом Puzzle программа использует клиент (модуль `puzzle`), созданный инструментом для кодогенерации **ariadne-codegen**. В случае если вам необходимо изменить функционал клиента, не нужно модифицировать вручную код модуля `puzzle`.
+The GraphQL client for Puzzle is generated into the `puzzle` module by `ariadne-codegen`. Do not edit the generated client code by hand.
 
-Вместо этого необходимо:
+To update the client after schema or query changes:
 
-1. Убедиться, что файл `schema.graphql` содержит актуальную модель данных.
-2. Изменить файл `queries.graphql` так, чтобы он содержал необходимые запросы к БД Puzzle.
-3. Выполнить команду для регенерации модуля `puzzle`:
+1. Make sure `schema.graphql` contains an up-to-date schema.
+2. Update `queries.graphql` with the required queries/mutations.
+3. Regenerate the client:
 
    ```bash
    uv run ariadne-codegen
    ```
 
-   > **Важно:** Запуск `ariadne-codegen` является обязательным шагом перед первым запуском приложения и после любых изменений в файлах `schema.graphql` или `queries.graphql`.
+**Note:** Running `ariadne-codegen` is required before the first run and after any changes to schema or query files.
 
-## Обновление схемы
+## Updating the schema
 
-Для обновления схемы потребуется установленное приложение cynic-cli, которое можно установить следующей командой (в системе должен быть установлен [Rust](https://rust-lang.org/tools/install/)):
+To update the schema you need the `cynic-cli` tool (requires [Rust](https://www.rust-lang.org/tools/install) to be installed):
 
 ```shell
 cargo install --git https://github.com/obmarg/cynic.git cynic-cli
 ```
 
-После установки cynic-cli выполните в shell команду `./get-schema.sh > schema.graphql`, в корне репозитория. Этот скрипт выполнит аутентификацию на сервере Puzzle и скачает актуальную схему GraphQL в файл `schema.graphql`.
+After installing `cynic-cli`, run `./get-schema.sh > schema.graphql` in the repository root to authenticate against the Puzzle server and download the current GraphQL schema.
 
-Чтобы скрипт успешно выполнился, необходимо предварительно задать в файле `.env` переменные:
+The script expects the following environment variables to be set in `.env`:
+- `PUZZLE_API` — GraphQL endpoint URL of the Puzzle server.
+- `PUZZLE_USER_DOMAIN` — studio domain (leave blank if not used).
+- `PUZZLE_USERNAME` — username to authenticate with.
+- `PUZZLE_PASSWORD` — password for the user.
 
-- `PUZZLE_API` — URL GraphQL API сервера Puzzle.
-- `PUZZLE_USER_DOMAIN` — домен студии, пустой, если домен не используется.
-- `PUZZLE_USERNAME` — имя пользователя.
-- `PUZZLE_PASSWORD` — пароль пользователя.
+Optionally, set `LOG_LEVEL` (e.g., `LOG_LEVEL=INFO`) to control logging verbosity.
 
-пример файла `.env` приведен в `example.env`.
+See `example.env` for an example `.env` file.
